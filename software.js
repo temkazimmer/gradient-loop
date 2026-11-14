@@ -1,4 +1,20 @@
-// CPU equivalent of the GLSL field for browsers without WebGL.
-export function softwareRenderer(canvas){const ctx=canvas.getContext('2d'),buffer=document.createElement('canvas'),b=buffer.getContext('2d');const smooth=(a,z,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(z-a)));return t*t*(3-2*t);};let last=-1;
-return(s,phase)=>{const now=performance.now();if(now-last<66)return;last=now;const rect=canvas.getBoundingClientRect();canvas.width=Math.round(rect.width);canvas.height=Math.round(rect.height);const h=300,w=Math.max(1,Math.round(h*rect.width/rect.height));buffer.width=w;buffer.height=h;const img=b.createImageData(w,h),colors=['background','violet','red','orange','core'].map(k=>[1,3,5].map(i=>parseInt(s[k].slice(i,i+2),16)));const a=phase*Math.PI*2;let wave=Math.sin(a);if(s.easing===1)wave=Math.sign(wave)*Math.abs(wave)**.65;if(s.easing===2)wave=Math.asin(wave)/(Math.PI/2);const center=s.radius+s.gap/2,sourceX=.035*Math.sin(2*a),sourceY=wave*(center+s.radius*.9),spread=(.17+.13*Math.abs(wave))*s.glow;
-for(let y=0;y<h;y++)for(let x=0;x<w;x++){const px=(x+.5-w/2)/h/s.zoom,py=(h/2-y-.5)/h/s.zoom/s.stretch,side=py>0?1:-1,d=Math.min(Math.hypot(px,py-center),Math.hypot(px,py+center))-s.radius,dist=Math.hypot((px-sourceX)*1.08,(py-sourceY)*.86),field=Math.exp(-((dist/spread)**2)*.68),inside=1-smooth(-.002,.002,d),lit=smooth(-.25,.9,side*wave),edge=Math.exp(-Math.max(d,0)/(.07*s.softness*s.glow)),hollow=Math.exp(-Math.max(-d,0)/(.065*s.softness)),internal=field*(.65+.6*lit),outside=field*edge*(.9+.3*lit),tail=Math.exp(-(((px-sourceX)/(.13*s.glow))**2)-(((py-side*(center+s.radius*.65))/(.24*s.glow))**2));let value=outside*(1-inside)+internal*(hollow*(1-lit)+lit)*inside+tail*.4*lit*(1-inside);value=Math.min(1,Math.max(0,value*s.intensity)**(1/s.softness));const factors=[smooth(0,.18,value),smooth(.13,.43,value),smooth(.34,.7,value),smooth(.65,.98,value)],noise=((Math.sin((x+.5)*127.1+(y+.5)*311.7)*43758.5453)%1)*s.grain*100;const index=(y*w+x)*4;for(let c=0;c<3;c++){let v=colors[0][c];for(let j=0;j<4;j++)v=v*(1-factors[j])+colors[j+1][c]*factors[j];img.data[index+c]=v+noise;}img.data[index+3]=255;}b.putImageData(img,0,0);ctx.drawImage(buffer,0,0,canvas.width,canvas.height);};}
+import {field,smooth} from './field.js';
+// Same periodic field as the GPU shader; reduced resolution keeps fallback responsive.
+export function softwareRenderer(canvas){
+ const ctx=canvas.getContext('2d'),buffer=document.createElement('canvas'),b=buffer.getContext('2d');
+ let img;
+ return(s,phase)=>{
+  const rect=canvas.getBoundingClientRect(),h=180,w=Math.max(1,Math.round(h*rect.width/rect.height));
+  if(canvas.width!==Math.round(rect.width)||canvas.height!==Math.round(rect.height)){canvas.width=Math.round(rect.width);canvas.height=Math.round(rect.height);}
+  if(buffer.width!==w||buffer.height!==h||!img){buffer.width=w;buffer.height=h;img=b.createImageData(w,h);}
+  const colors=['background','violet','red','orange','core'].map(k=>[1,3,5].map(i=>parseInt(s[k].slice(i,i+2),16)));
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const value=field((x+.5-w/2)/h/s.zoom,(h/2-y-.5)/h/s.zoom/s.stretch,phase,s);
+   const factors=[smooth(0,.18,value),smooth(.13,.43,value),smooth(.34,.7,value),smooth(.65,.98,value)];
+   const hash=Math.sin((x+.5)*127.1+(h-y-.5)*311.7)*43758.5453,noise=(hash-Math.floor(hash)-.5)*s.grain*255,index=(y*w+x)*4;
+   for(let c=0;c<3;c++){let v=colors[0][c];for(let j=0;j<4;j++)v=v*(1-factors[j])+colors[j+1][c]*factors[j];img.data[index+c]=v+noise;}
+   img.data[index+3]=255;
+  }
+  b.putImageData(img,0,0);ctx.drawImage(buffer,0,0,canvas.width,canvas.height);
+ };
+}
