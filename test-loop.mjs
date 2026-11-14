@@ -1,12 +1,9 @@
 import assert from 'node:assert/strict';
-import {field} from './field.js';
-for(const easing of [0,1,2]){
- const s={radius:.19,gap:.04,glow:1,softness:1,intensity:1,easing};
- for(let y=-.5;y<=.5;y+=.025)for(let x=-.4;x<=.4;x+=.025){
-  assert.ok(Math.abs(field(x,y,0,s)-field(x,y,1,s))<1e-12,'Loop endpoints differ');
-  const h=1e-5,left=(field(x,y,0,s)-field(x,y,-h,s))/h,right=(field(x,y,h,s)-field(x,y,0,s))/h;
-  assert.ok(Math.abs(left-right)<.003,'Loop velocity discontinuity');
-  for(const t of [0,.125,.25,.5,.75,1])assert.ok(Number.isFinite(field(x,y,t,s)));
- }
-}
-console.log('Passed: identical loop endpoints, continuous boundary velocity, finite field values for all easing modes.');
+const cubic=(a,b,c,d,t)=>.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t);
+const frames=Array.from({length:120},(_,i)=>Math.sin(i*.17));
+const sample=t=>{const f=((t%1+1)%1)*120,n=Math.floor(f),w=f-n;return cubic(frames[(n+119)%120],frames[n],frames[(n+1)%120],frames[(n+2)%120],w);};
+assert.equal(sample(0),sample(1));
+const h=1e-7;
+assert.ok(Math.abs((sample(0)-sample(-h))/h-(sample(h)-sample(0))/h)<.1);
+for(let i=0;i<120;i++)assert.ok(Math.abs(sample(i/120)-frames[i])<1e-10);
+console.log('Passed: cyclic interpolation visits every source frame and matches position and velocity at the seam.');

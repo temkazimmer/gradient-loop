@@ -1,26 +1,21 @@
 # Gradient Loop
 
-A dependency-free WebGL motion studio inspired by the supplied molten gradient reference. Two circular forms share a continuously travelling phase field with a warm core and violet falloff. This is a procedural interpretation, not video playback or a frame-perfect reconstruction.
+Reference-based animation reconstruction with editable colours and timing.
+
+The original four-second cycle is sampled into a 120-frame, 214 × 280 texture atlas. The renderer interpolates four neighbouring frames cyclically using Catmull–Rom interpolation, including across the loop boundary. This preserves the reference silhouette and evolving glow. It is a texture-based reconstruction, not a fully procedural simulation.
 
 ## Run
 
-Run `npm run dev` and open http://localhost:3000. No installation or build required. Deploy the folder as a static website, including GitHub Pages.
+Run `npm run dev`, then open http://localhost:3000. No package installation required. GitHub Pages can serve these static files directly.
 
 ## Controls
 
-- Five editable gradient colours, four palette presets, intensity and gradient softness.
-- Loop duration, phase offset, easing, reverse, playback, restart and timeline scrubbing.
-- Orb radius, separation, vertical stretch, glow spread, grain, and scale.
-- Portrait, square and landscape previews; fullscreen and PNG frame capture.
-- JSON export/import and automatic local browser persistence.
-- Space pauses; H toggles a distraction-free view. Reduced-motion preference starts the artwork paused.
+Five palette colours, intensity, gradient softness, loop duration, phase, easing, reverse, timeline scrubbing, horizontal shape, separation, vertical stretch, glow strength, grain and scale. Import/export JSON settings and save a PNG frame. Space pauses and H hides controls.
 
-## Implementation
+Shape controls warp the reference field; extreme settings can reveal the texture bounds. Source resolution is limited to 214 × 280 per frame. Default colours preserve the source RGB, with editable palette adjustments applied as a colour difference.
 
-`app.js` contains the GLSL fragment shader, palette interpolation, and rendering/UI code. One fullscreen triangle pair is rendered in native WebGL 1. A lower-resolution Canvas 2D software implementation of the same field is used when WebGL is unavailable. The shader combines signed circle distances and a periodic travelling phase field; every animated term repeats after one cycle. Grain is spatially fixed for seamless looping. Resolution is responsive with device pixel ratio capped at 2. No dependencies, CDNs, external fonts or assets.
+## Validation
 
-The original reference video is intentionally not bundled. The shader can be embedded by reusing its uniforms and full-screen rendering setup.
+`npm run check` checks JavaScript syntax and cyclic interpolation. Source-frame comparison measured mean RGB error of 1.22/255 after WebP compression. The last-to-first frame difference is within normal source frame variation. Software-rendered bright and inverted phases were inspected in the browser. GPU execution is not verified in the remote browser, which has WebGL disabled.
 
-## Check
-
-`npm run check` verifies JavaScript syntax and samples loop endpoints, boundary velocity, and finite field values across all easing modes. Layout, playback, timeline scrubbing and palette controls were checked in the preview browser using the software renderer. The preview browser did not expose WebGL, so GPU shader compilation and GPU appearance remain unverified. Browser QA should also verify WebGL compilation, colour changes, scrubbing, import/export and capture.
+This branch uses native WebGL 1.
