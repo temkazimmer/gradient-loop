@@ -6,7 +6,7 @@ The original four-second cycle is sampled into a 120-frame, 214 × 280 texture a
 
 ## Run
 
-Run `npm run dev`, then open http://localhost:3000. No package installation required. GitHub Pages can serve these static files directly.
+Run `npm run dev`, then open http://localhost:3000. No package installation required. The Three.js version requires an internet connection to load its pinned module. GitHub Pages can serve these static files directly.
 
 ## Controls
 
@@ -18,4 +18,4 @@ Shape controls warp the reference field; extreme settings can reveal the texture
 
 `npm run check` checks JavaScript syntax and cyclic interpolation. Source-frame comparison measured mean RGB error of 1.22/255 after WebP compression. The last-to-first frame difference is within normal source frame variation. Software-rendered bright and inverted phases were inspected in the browser. GPU execution is not verified in the remote browser, which has WebGL disabled.
 
-This branch uses native WebGL 1.
+This branch uses Three.js 0.180.0 loaded from the pinned jsDelivr ES module URL and RawShaderMaterial.
